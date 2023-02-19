@@ -1,0 +1,6 @@
+Type,Date,Shares,Price,Price per share,Name
+Deposit,2020-01-01,1,100,100,USD
+Buy,2020-01-02,1,15,15,Apple
+Buy,2020-01-03,2,50,25,Apple
+Buy,2020-01-04,1,35,35,Apple
+Sell,2020-01-05,2,20,10,Apple
