@@ -109,6 +109,7 @@ Assuming Apple's price is $20/share on 2020-01-03:
   3. [Portfolio](#portfolio)
 - [Getting portfolio from transactions](#getting-portfolio-from-transactions)
 - [Overriding faulty data](#overriding-faulty-data)
+- [Transferring Redis cache data](#transferring-redis-cache-data)
 
 ## Profit calculation methods
 
@@ -325,3 +326,10 @@ map.set('exchangeTicker/US0378331005', [Exchange.NYSE, 'AAPL']);
 map.set('exchangeRate/USD/EUR/2023-03-12', 1.00);
 const overrideCache = new OverrideCache(overrideMap, defaultCache);
 ```
+
+## Transferring Redis cache data
+
+1. Connect to the Redis server with `redis-cli`
+2. Run `bgsave` to create a backup of the current data
+3. The backup file `dump.rdb` is located in Redis's working directory. You can find this at `cat /etc/redis/redis.conf`
+4. Copy this file to Redis's working directory in the new environment
