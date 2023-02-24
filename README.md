@@ -5,7 +5,7 @@ portfolio-valuation is a tool that can be used to calculate the value and profit
 ## Features
 
 - Uses Deno
-- Core of codebase uses standard web APIs, can relatively easily be implemented in any JavaScript runtime
+- Core of codebase uses standard web APIs, can be implemented in any JavaScript runtime with relative ease
 - [LIFO, FIFO and WAC](#profit-calculation-methods) profit calculation methods
 - Valuation in any supported currency
 - Supports variety of [transaction types](#transaction)
