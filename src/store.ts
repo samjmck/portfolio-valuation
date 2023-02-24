@@ -1,5 +1,5 @@
-import { Currency, Money, OHLC } from "./money";
-import { Exchange } from "./exchange";
+import { Currency, Money, OHLC } from "./money.ts";
+import { Exchange } from "./exchange.ts";
 
 export enum Interval {
     Day = "day",

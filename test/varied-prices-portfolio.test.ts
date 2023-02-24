@@ -1,21 +1,27 @@
-import { describe, expect, test } from "vitest";
-import { CashPosition, CashTransaction, SecurityPosition, SecurityTransaction, Transaction } from "../src/portfolio";
-import { Currency } from "../src/money";
-import { Exchange } from "../src/exchange";
-import { EmptyCache, OverrideCache } from "../src/cache";
-import { OpnfnStore } from "../src/OpnfnStore";
-import { getFIFOPerformance } from "../src/performance-fifo";
-import { getLIFOPerformance } from "../src/performance-lifo";
-import { getWACPerformance } from "../src/performance-wac";
+import { assertEquals, assertObjectMatch } from "https://deno.land/std@0.178.0/testing/asserts.ts"
+import {
+    CashPosition,
+    CashTransaction,
+    isCashPosition, isSecurityPosition,
+    SecurityPosition,
+    SecurityTransaction,
+    Transaction
+} from "../src/portfolio.ts";
+import { Currency } from "../src/money.ts";
+import { Exchange } from "../src/exchange.ts";
+import { EmptyCache, OverrideCache } from "../src/cache.ts";
+import { OpnfnStore } from "../src/OpnfnStore.ts";
+import { getFIFOPerformance } from "../src/performance-fifo.ts";
+import { getLIFOPerformance } from "../src/performance-lifo.ts";
+import { getWACPerformance } from "../src/performance-wac.ts";
 
 function getPriceCacheKey(isin: string, currency: Currency, time: Date) {
     return `price/${isin}/${currency}/${time.toISOString().replace(/T.*/, "")}`;
 }
 
-const emptyCache = new EmptyCache();
-const opnfnStore = new OpnfnStore();
-
-describe("transaction history with varied prices", () => {
+Deno.test("transaction history with varied prices", async (t) => {
+    const emptyCache = new EmptyCache();
+    const opnfnStore = new OpnfnStore();
 
     // Transaction history with different prices on different days
 
@@ -80,7 +86,7 @@ describe("transaction history with varied prices", () => {
     overrideCacheMap.set(getPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-06")), 10_00);
     const overrideCache = new OverrideCache(overrideCacheMap, emptyCache);
 
-    test("WAC performance checks", async () => {
+    await t.step("WAC performance checks", async () => {
         const performance = await getWACPerformance(
             transactionsVariedPrices,
             new Date("2020-01-01"),
@@ -121,23 +127,23 @@ describe("transaction history with varied prices", () => {
 
         // Total value
 
-        expect(performance.totalValue).toEqual({currency: Currency.USD, amount: 40_00});
-        expect(performance.unrealisedPL).toEqual({currency: Currency.USD, amount: -30_00});
-        expect(performance.realisedPL).toEqual({currency: Currency.USD, amount: -30_00});
-        expect(performance.openPositions).toMatchObject([
-            <Partial<CashPosition>> {
-                value: {currency: Currency.USD, amount: 20_00},
+        assertEquals(performance.totalValue, {currency: Currency.USD, amount: 40_00});
+        assertEquals(performance.unrealisedPL, {currency: Currency.USD, amount: -30_00});
+        assertEquals(performance.realisedPL, {currency: Currency.USD, amount: -30_00});
+        const cashPosition = performance.openPositions.filter(isCashPosition)[0];
+        assertObjectMatch(cashPosition, <Partial<CashPosition>> {
+            value: {currency: Currency.USD, amount: 20_00},
+        });
+        const securityPosition = performance.openPositions.filter(isSecurityPosition)[0];
+        assertObjectMatch(securityPosition, <Partial<SecurityPosition>> {
+            security: {
+                isin: "APPLE",
             },
-            <Partial<SecurityPosition>> {
-                security: {
-                    isin: "APPLE",
-                },
-                shares: 2,
-            },
-        ]);
+            shares: 2,
+        });
     });
 
-    test("FIFO performance checks", async () => {
+    await t.step("FIFO performance checks", async () => {
         const performance = await getFIFOPerformance(
             transactionsVariedPrices,
             new Date("2020-01-01"),
@@ -165,23 +171,23 @@ describe("transaction history with varied prices", () => {
         // 1            25 USD     10 USD         -15 USD
         //                                      = -20 USD
 
-        expect(performance.totalValue).toEqual({currency: Currency.USD, amount: 40_00});
-        expect(performance.unrealisedPL).toEqual({currency: Currency.USD, amount: -40_00});
-        expect(performance.realisedPL).toEqual({currency: Currency.USD, amount: -20_00});
-        expect(performance.openPositions).toMatchObject([
-            <Partial<CashPosition>> {
-                value: {currency: Currency.USD, amount: 20_00},
+        assertEquals(performance.totalValue, {currency: Currency.USD, amount: 40_00});
+        assertEquals(performance.unrealisedPL, {currency: Currency.USD, amount: -40_00});
+        assertEquals(performance.realisedPL, {currency: Currency.USD, amount: -20_00});
+        const cashPosition = performance.openPositions.filter(isCashPosition)[0];
+        assertObjectMatch(cashPosition, <Partial<CashPosition>> {
+            value: {currency: Currency.USD, amount: 20_00},
+        });
+        const securityPosition = performance.openPositions.filter(isSecurityPosition)[0];
+        assertObjectMatch(securityPosition, <Partial<SecurityPosition>> {
+            security: {
+                isin: "APPLE",
             },
-            <Partial<SecurityPosition>> {
-                security: {
-                    isin: "APPLE",
-                },
-                shares: 2,
-            },
-        ]);
+            shares: 2,
+        });
     });
 
-    test("LIFO performance checks", async () => {
+    await t.step("LIFO performance checks", async () => {
         const performance = await getLIFOPerformance(
             transactionsVariedPrices,
             new Date("2020-01-01"),
@@ -209,19 +215,19 @@ describe("transaction history with varied prices", () => {
         // 1            25 USD     10 USD         -15 USD
         //                                      = -40 USD
 
-        expect(performance.totalValue).toEqual({currency: Currency.USD, amount: 40_00});
-        expect(performance.unrealisedPL).toEqual({currency: Currency.USD, amount: -20_00});
-        expect(performance.realisedPL).toEqual({currency: Currency.USD, amount: -40_00});
-        expect(performance.openPositions).toMatchObject([
-            <Partial<CashPosition>> {
-                value: {currency: Currency.USD, amount: 20_00},
+        assertEquals(performance.totalValue, {currency: Currency.USD, amount: 40_00});
+        assertEquals(performance.unrealisedPL, {currency: Currency.USD, amount: -20_00});
+        assertEquals(performance.realisedPL, {currency: Currency.USD, amount: -40_00});
+        const cashPosition = performance.openPositions.filter(isCashPosition)[0];
+        assertObjectMatch(cashPosition, <Partial<CashPosition>> {
+            value: {currency: Currency.USD, amount: 20_00},
+        });
+        const securityPosition = performance.openPositions.filter(isSecurityPosition)[0];
+        assertObjectMatch(securityPosition, <Partial<SecurityPosition>> {
+            security: {
+                isin: "APPLE",
             },
-            <Partial<SecurityPosition>> {
-                security: {
-                    isin: "APPLE",
-                },
-                shares: 2,
-            },
-        ]);
+            shares: 2,
+        });
     });
 });

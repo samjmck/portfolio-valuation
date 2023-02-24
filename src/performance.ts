@@ -1,7 +1,7 @@
-import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore } from "./store";
-import { Cache } from "./cache";
-import { Currency, Money } from "./money";
-import { Position, Positions, Transaction } from "./portfolio";
+import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore } from "./store.ts";
+import { Cache } from "./cache.ts";
+import { Currency, Money } from "./money.ts";
+import { Position, Transaction } from "./portfolio.ts";
 
 // Certain functions from data stores should be cached as they will be called every time the portfolio performance
 // is calculated. The data store calls are expensive and slow as they are making network requests to external APIs

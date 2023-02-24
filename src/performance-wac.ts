@@ -1,9 +1,9 @@
-import { getPositions, Position, Transaction } from "./portfolio";
-import { Currency } from "./money";
-import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore } from "./store";
-import { Cache } from "./cache";
-import { getExchangeRate, getISINPrice } from "./performance-cache";
-import { ClosedPosition, GetPerformanceFunction, OpenPosition } from "./performance";
+import { getPositions, Transaction } from "./portfolio.ts";
+import { Currency } from "./money.ts";
+import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore } from "./store.ts";
+import { Cache } from "./cache.ts";
+import { getExchangeRate, getISINPrice } from "./performance-cache.ts";
+import { ClosedPosition, GetPerformanceFunction, OpenPosition } from "./performance.ts";
 
 // Weighted Average Cost
 export const getWACPerformance: GetPerformanceFunction = async (

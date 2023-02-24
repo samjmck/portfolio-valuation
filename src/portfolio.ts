@@ -1,4 +1,4 @@
-import type { Currency, Money } from "./money";
+import type { Currency, Money } from "./money.ts";
 
 // Transactions
 

@@ -1,4 +1,5 @@
-import { createClient } from "redis";
+import { createClient } from "npm:redis@4.6.4";
+import * as superjson from "npm:superjson@1.12.2";
 
 export interface Cache {
     get<T>(key: string): Promise<T | null>;
@@ -42,11 +43,11 @@ export class RedisCache implements Cache {
         if(result === null) {
             return null;
         }
-        return JSON.parse(result);
+        return superjson.parse(result);
     }
 
     async put(key: string, value: unknown, expirationSeconds?: number): Promise<void> {
-        await this.redisClient.set(key, JSON.stringify(value));
+        await this.redisClient.set(key, superjson.stringify(value));
         if(expirationSeconds !== undefined) {
             await this.redisClient.expire(key, expirationSeconds);
         }

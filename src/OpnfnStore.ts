@@ -6,9 +6,9 @@ import {
     ReadableStore,
     SearchResultItem,
     SearchStore
-} from "./store";
-import { Exchange, exchangeToOperatingMic, micToExchange } from "./exchange";
-import { Currency, OHLC } from "./money";
+} from "./store.ts";
+import { Exchange, exchangeToOperatingMic, micToExchange } from "./exchange.ts";
+import { Currency, OHLC } from "./money.ts";
 
 type ExchangeRateResponse = {
     exchangeRate: number;

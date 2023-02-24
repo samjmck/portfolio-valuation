@@ -1,14 +1,27 @@
-import { Currency } from "./money";
-import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore } from "./store";
-import { Cache } from "./cache";
-import { Exchange } from "./exchange";
+import { Currency } from "./money.ts";
+import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore } from "./store.ts";
+import { Cache } from "./cache.ts";
+import { Exchange } from "./exchange.ts";
 
-async function getISINMainExchangeTicker(
+export function getISINMainExchangeCacheKey(isin: string): string {
+    return `exchangeTicker/${isin}`;
+}
+
+export function getExchangeRateCacheKey(fromCurrency: Currency, toCurrency: Currency, time: Date): string {
+    return `exchangeRate/${fromCurrency}/${toCurrency}/${time.toISOString().replace(/T.*/, "")}`;
+}
+
+export function getISINPriceCacheKey(isin: string, currency: Currency, time: Date): string {
+    return `price/${isin}/${currency}/${time.toISOString().replace(/T.*/, "")}`;
+}
+
+export async function getISINMainExchangeTicker(
     isin: string,
     searchStore: SearchStore,
     cache: Cache,
 ): Promise<[Exchange, string]> {
-    const cachedResult = await cache.get<[Exchange, string]>(`exchangeTicker/${isin}`);
+    const cacheKey = getISINMainExchangeCacheKey(isin);
+    const cachedResult = await cache.get<[Exchange, string]>(cacheKey);
     if (cachedResult !== null) {
         return cachedResult;
     }
@@ -19,7 +32,7 @@ async function getISINMainExchangeTicker(
     }
 
     // Cache for one year as the ISIN -> ticker mapping could change e.g. if the company changes its name
-    cache.put(`exchangeTicker/${isin}`, [searchResult[0].exchange, searchResult[0].ticker], 365 * 24 * 60 * 60);
+    cache.put(cacheKey, [searchResult[0].exchange, searchResult[0].ticker], 365 * 24 * 60 * 60);
 
     return [searchResult[0].exchange, searchResult[0].ticker];
 }
@@ -35,7 +48,8 @@ export async function getExchangeRate(
         return 1;
     }
 
-    const cachedResult = await cache.get<number>(`exchangeRate/${fromCurrency}/${toCurrency}/${time.toISOString().replace(/T.*/, "")}`);
+    const cacheKey = getExchangeRateCacheKey(fromCurrency, toCurrency, time);
+    const cachedResult = await cache.get<number>(cacheKey);
     if (cachedResult !== null) {
         return cachedResult;
     }
@@ -43,7 +57,7 @@ export async function getExchangeRate(
     const exchangeRate = (await fxStore.getExchangeRateAtClose(fromCurrency, toCurrency, time)).exchangeRate;
 
     // Cache forever as historical exchange rate should not change
-    cache.put(`exchangeRate/${fromCurrency}/${toCurrency}/${time.toISOString().replace(/T.*/, "")}`, exchangeRate);
+    cache.put(cacheKey, exchangeRate);
 
     return exchangeRate;
 }
@@ -59,7 +73,8 @@ export async function getISINPrice(
 ): Promise<number> {
     const [exchange, ticker] = await getISINMainExchangeTicker(isin, searchStore, cache);
 
-    const cachedResult = await cache.get<number>(`price/${isin}/${currency}/${time.toISOString().replace(/T.*/, "")}`);
+    const cacheKey = getISINPriceCacheKey(isin, currency, time);
+    const cachedResult = await cache.get<number>(cacheKey);
     if (cachedResult !== null) {
         return cachedResult;
     }
@@ -71,7 +86,7 @@ export async function getISINPrice(
     }
 
     // Cache forever as historical price for a given ISIN and currency should not change
-    cache.put(`price/${isin}/${currency}/${time.toISOString().replace(/T.*/, "")}`, exchangeRate * price.amount);
+    cache.put(cacheKey, exchangeRate * price.amount);
 
     return exchangeRate * price.amount;
 }
