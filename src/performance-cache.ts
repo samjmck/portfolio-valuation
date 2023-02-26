@@ -16,7 +16,7 @@ export function getISINPriceCacheKey(isin: string, currency: Currency, time: Dat
 }
 
 export function getISINStockSplitsCacheKey(isin: string, startTime: Date): string {
-    return `stockSplits/${isin}/${startTime.toISOString().replace(/T.*/, "")}}`;
+    return `stockSplits/${isin}/${startTime.toISOString().replace(/T.*/, "")}`;
 }
 
 export async function getISINMainExchangeTicker(
