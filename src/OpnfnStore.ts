@@ -5,7 +5,7 @@ import {
     ReadableFXStore,
     ReadableStore,
     SearchResultItem,
-    SearchStore
+    SearchStore, Split
 } from "./store.ts";
 import { Exchange, exchangeToOperatingMic, micToExchange } from "./exchange.ts";
 import { Currency, OHLC } from "./money.ts";
@@ -29,6 +29,11 @@ type SearchResponse = {
     ticker: string;
 }[];
 
+type StockSplitsResponse = {
+    time: string;
+    split: number;
+}[];
+
 export class OpnfnStore implements
     SearchStore,
     ReadableStore,
@@ -43,6 +48,37 @@ export class OpnfnStore implements
         const response = await fetch(`${this.baseUrl}/profile/isin/${isin}`);
         const json = await response.json();
         return json;
+    }
+
+    async getStockSplitTotalMultiplier(
+        since: Date,
+        exchange: Exchange,
+        ticker: string
+    ) {
+        const splits = await this.getStockSplits(since, new Date(), exchange, ticker);
+        let multiplier = 1;
+        for(const { split: splitMultiplier } of splits) {
+            multiplier *= splitMultiplier;
+        }
+        return multiplier;
+    }
+
+    async getStockSplits(
+        startTime: Date,
+        endTime: Date,
+        exchange: Exchange,
+        ticker: string,
+    ) {
+        const response = await fetch(`${this.baseUrl}/stock_splits/exchange/${exchangeToOperatingMic(exchange)}/ticker/${ticker}/start/${startTime.toISOString()}/end/${endTime.toISOString()}`);
+        const json = await response.json();
+        const results = <Split[]> [];
+        for(const result of json) {
+            results.push({
+                time: new Date(result.time),
+                split: result.split,
+            });
+        }
+        return results;
     }
 
     async search(query: string) {

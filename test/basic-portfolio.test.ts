@@ -15,10 +15,9 @@ import { getFIFOPerformance } from "../src/performance-fifo.ts";
 import { getWACPerformance } from "../src/performance-wac.ts";
 import { GetPerformanceFunction } from "../src/performance.ts";
 import { getLIFOPerformance } from "../src/performance-lifo.ts";
+import { getISINPriceCacheKey, getISINStockSplitsCacheKey } from "../src/performance-cache.ts";
 
-function getPriceCacheKey(isin: string, currency: Currency, time: Date) {
-    return `price/${isin}/${currency}/${time.toISOString().replace(/T.*/, "")}`;
-}
+
 Deno.test("basic portfolio test", async (t) => {
     const emptyCache = new EmptyCache();
     const opnfnStore = new OpnfnStore();
@@ -50,7 +49,8 @@ Deno.test("basic portfolio test", async (t) => {
     // Set share prices on days of transactions
     const overrideCacheMap: Map<string, unknown> = new Map();
     overrideCacheMap.set("exchangeTicker/APPLE", [Exchange.OTC, "APPLE"]);
-    overrideCacheMap.set(getPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-03")), 20_00);
+    overrideCacheMap.set(getISINPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-03")), 20_00);
+    overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02")), []);
     const overridesCache = new OverrideCache(overrideCacheMap, emptyCache);
 
     await t.step("initial key performance metrics", async () => {
@@ -59,6 +59,7 @@ Deno.test("basic portfolio test", async (t) => {
             new Date("2020-01-01"),
             new Date("2020-01-03"),
             Currency.USD,
+            opnfnStore,
             opnfnStore,
             opnfnStore,
             opnfnStore,
@@ -93,13 +94,14 @@ Deno.test("basic portfolio test", async (t) => {
             },
             metadata: {},
         });
-        overrideCacheMap.set(getPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-04")), 20_00);
+        overrideCacheMap.set(getISINPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-04")), 20_00);
 
         const performance = await getFIFOPerformance(
             transactionsBasicPortfolio,
             new Date("2020-01-01"),
             new Date("2020-01-04"),
             Currency.USD,
+            opnfnStore,
             opnfnStore,
             opnfnStore,
             opnfnStore,
@@ -140,6 +142,7 @@ Deno.test("basic portfolio test", async (t) => {
             new Date("2020-01-01"),
             new Date("2020-01-04"),
             Currency.USD,
+            opnfnStore,
             opnfnStore,
             opnfnStore,
             opnfnStore,

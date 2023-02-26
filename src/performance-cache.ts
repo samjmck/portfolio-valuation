@@ -15,8 +15,8 @@ export function getISINPriceCacheKey(isin: string, currency: Currency, time: Dat
     return `price/${isin}/${currency}/${time.toISOString().replace(/T.*/, "")}`;
 }
 
-export function getISINStockSplitsCacheKey(isin: string, startTime: Date, endTime: Date): string {
-    return `stockSplits/${isin}/${startTime.toISOString().replace(/T.*/, "")}/${endTime.toISOString().replace(/T.*/, "")}`;
+export function getISINStockSplitsCacheKey(isin: string, startTime: Date): string {
+    return `stockSplits/${isin}/${startTime.toISOString().replace(/T.*/, "")}}`;
 }
 
 export async function getISINMainExchangeTicker(
@@ -105,7 +105,7 @@ export async function getISINStockSplits(
 ): Promise<Split[]> {
     const [exchange, ticker] = await getISINMainExchangeTicker(isin, searchStore, cache);
 
-    const cacheKey = getISINStockSplitsCacheKey(isin, startTime, endTime);
+    const cacheKey = getISINStockSplitsCacheKey(isin, startTime);
     const cachedResult = await cache.get<Split[]>(cacheKey);
     if (cachedResult !== null) {
         return cachedResult;

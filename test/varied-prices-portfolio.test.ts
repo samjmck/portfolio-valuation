@@ -14,6 +14,7 @@ import { OpnfnStore } from "../src/OpnfnStore.ts";
 import { getFIFOPerformance } from "../src/performance-fifo.ts";
 import { getLIFOPerformance } from "../src/performance-lifo.ts";
 import { getWACPerformance } from "../src/performance-wac.ts";
+import { getISINStockSplitsCacheKey } from "../src/performance-cache.ts";
 
 function getPriceCacheKey(isin: string, currency: Currency, time: Date) {
     return `price/${isin}/${currency}/${time.toISOString().replace(/T.*/, "")}`;
@@ -84,6 +85,7 @@ Deno.test("transaction history with varied prices", async (t) => {
     const overrideCacheMap: Map<string, unknown> = new Map();
     overrideCacheMap.set("exchangeTicker/APPLE", [Exchange.OTC, "APPLE"]);
     overrideCacheMap.set(getPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-06")), 10_00);
+    overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02")), []);
     const overrideCache = new OverrideCache(overrideCacheMap, emptyCache);
 
     await t.step("WAC performance checks", async () => {
@@ -92,6 +94,7 @@ Deno.test("transaction history with varied prices", async (t) => {
             new Date("2020-01-01"),
             new Date("2020-01-06"),
             Currency.USD,
+            opnfnStore,
             opnfnStore,
             opnfnStore,
             opnfnStore,
@@ -152,6 +155,7 @@ Deno.test("transaction history with varied prices", async (t) => {
             opnfnStore,
             opnfnStore,
             opnfnStore,
+            opnfnStore,
             overrideCache,
         );
 
@@ -193,6 +197,7 @@ Deno.test("transaction history with varied prices", async (t) => {
             new Date("2020-01-01"),
             new Date("2020-01-06"),
             Currency.USD,
+            opnfnStore,
             opnfnStore,
             opnfnStore,
             opnfnStore,
