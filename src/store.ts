@@ -92,5 +92,5 @@ export interface StockSplitStore {
         endTime: Date,
         exchange: Exchange,
         ticker: string,
-    ): Promise<Split[]>
+    ): Promise<Split[]>;
 }

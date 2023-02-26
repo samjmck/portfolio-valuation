@@ -1,9 +1,10 @@
 import { getPositions, Transaction } from "./portfolio.ts";
 import { Currency } from "./money.ts";
-import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore } from "./store.ts";
+import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore, StockSplitStore } from "./store.ts";
 import { Cache } from "./cache.ts";
 import { getExchangeRate, getISINPrice } from "./performance-cache.ts";
 import { ClosedPosition, GetPerformanceFunction, OpenPosition } from "./performance.ts";
+import { getStockSplitCorrectedTransactions } from "./corrections.ts";
 
 // Last In First Out
 export const getLIFOPerformance: GetPerformanceFunction = async (
@@ -14,13 +15,15 @@ export const getLIFOPerformance: GetPerformanceFunction = async (
     searchStore: SearchStore,
     priceStore: HistoricalReadableStore,
     fxStore: HistoricalReadableFXStore,
+    stockSplitStore: StockSplitStore,
     cache: Cache,
 ) => {
     const totalValue = {currency, amount: 0};
     const unrealisedPL = {currency, amount: 0};
     const realisedPL = {currency, amount: 0};
 
-    const positions = getPositions(startTime, endTime, fullTransactionHistory);
+    const stockSplitCorrectedTransactions = await getStockSplitCorrectedTransactions(fullTransactionHistory, endTime, searchStore, stockSplitStore, cache);
+    const positions = getPositions(startTime, endTime, stockSplitCorrectedTransactions);
     const openPositions: OpenPosition[] = [];
     const closedPositions: ClosedPosition[] = [];
 

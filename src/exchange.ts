@@ -24,7 +24,6 @@ export enum Exchange {
     KoreaExchange,
     BorseFrankfurt,
     BorseBerlin,
-    BorseStuttgart,
     BudapestStockExchange,
     PragueStockExchange,
     BorsaIstanbul,
@@ -35,6 +34,9 @@ export enum Exchange {
     TorontoStockExchange,
     NEOExchange,
     HongKongExchange,
+    BorseStuttgart,
+    TokyoStockExchange,
+    LondonStockExchangeIOB,
 }
 
 export function exchangeToOperatingMic(exchange: Exchange): string {
@@ -107,6 +109,10 @@ export function exchangeToOperatingMic(exchange: Exchange): string {
             return "XHKF";
         case Exchange.BorseStuttgart:
             return "XSTU";
+        case Exchange.TokyoStockExchange:
+            return "XTKS";
+        case Exchange.LondonStockExchangeIOB:
+            return "XLON";
         default:
             throw new Error(`could not get MIC of "${exchange}"`);
     }
@@ -114,7 +120,7 @@ export function exchangeToOperatingMic(exchange: Exchange): string {
 
 export function micToExchange(mic: string): Exchange {
     switch (mic) {
-        case "XYNS":
+        case "XNYS":
             return Exchange.NYSE;
         case "XNAS":
             return Exchange.Nasdaq;
@@ -136,6 +142,8 @@ export function micToExchange(mic: string): Exchange {
             return Exchange.LondonStockExchange;
         case "XTSE":
             return Exchange.TorontoStockExchange;
+        case "XTAI":
+            return Exchange.TaiwanStockExchange;
         case "XSWX":
             return Exchange.SIXSwissExchange;
         case "XFRA":
@@ -152,8 +160,18 @@ export function micToExchange(mic: string): Exchange {
             return Exchange.HongKongExchange;
         case "XSTU":
             return Exchange.BorseStuttgart;
+        case "XTKS":
+            return Exchange.TokyoStockExchange;
+        case "NEOE":
+            return Exchange.NEOExchange;
+        case "XMEX":
+            return Exchange.BolsaMexicana;
+        case "LOTC":
+            return Exchange.OTC;
+        case "XETR":
+            return Exchange.Xetra;
         default:
-            throw new Error("could not find exchange");
+            throw new Error(`could not find exchange for MIC "${mic}"`);
     }
 }
 

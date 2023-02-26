@@ -1,5 +1,5 @@
 import { Currency } from "./money.ts";
-import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore } from "./store.ts";
+import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore, Split, StockSplitStore } from "./store.ts";
 import { Cache } from "./cache.ts";
 import { Exchange } from "./exchange.ts";
 
@@ -13,6 +13,10 @@ export function getExchangeRateCacheKey(fromCurrency: Currency, toCurrency: Curr
 
 export function getISINPriceCacheKey(isin: string, currency: Currency, time: Date): string {
     return `price/${isin}/${currency}/${time.toISOString().replace(/T.*/, "")}`;
+}
+
+export function getISINStockSplitsCacheKey(isin: string, startTime: Date, endTime: Date): string {
+    return `stockSplits/${isin}/${startTime.toISOString().replace(/T.*/, "")}/${endTime.toISOString().replace(/T.*/, "")}`;
 }
 
 export async function getISINMainExchangeTicker(
@@ -89,4 +93,28 @@ export async function getISINPrice(
     cache.put(cacheKey, exchangeRate * price.amount);
 
     return exchangeRate * price.amount;
+}
+
+export async function getISINStockSplits(
+    isin: string,
+    startTime: Date,
+    endTime: Date,
+    searchStore: SearchStore,
+    stockSplitsStore: StockSplitStore,
+    cache: Cache,
+): Promise<Split[]> {
+    const [exchange, ticker] = await getISINMainExchangeTicker(isin, searchStore, cache);
+
+    const cacheKey = getISINStockSplitsCacheKey(isin, startTime, endTime);
+    const cachedResult = await cache.get<Split[]>(cacheKey);
+    if (cachedResult !== null) {
+        return cachedResult;
+    }
+
+    const stockSplits = await stockSplitsStore.getStockSplits(startTime, endTime, exchange, ticker);
+
+    // Cache for 1 day - stock split might happen the next day
+    cache.put(cacheKey, stockSplits, 24 * 60 * 60);
+
+    return stockSplits;
 }

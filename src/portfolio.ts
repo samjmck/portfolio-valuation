@@ -160,6 +160,7 @@ export function getPositions(
                     // Sell/deposit/dividend transaction
                     currencyBalance.inTransactions.push(transaction);
                 }
+                currencyBalance.transactions.push(transaction);
             }
         }
     }

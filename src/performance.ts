@@ -1,4 +1,4 @@
-import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore } from "./store.ts";
+import { HistoricalReadableFXStore, HistoricalReadableStore, SearchStore, StockSplitStore } from "./store.ts";
 import { Cache } from "./cache.ts";
 import { Currency, Money } from "./money.ts";
 import { Position, Transaction } from "./portfolio.ts";
@@ -26,6 +26,7 @@ export type GetPerformanceFunction = (
     searchStore: SearchStore,
     priceStore: HistoricalReadableStore,
     fxStore: HistoricalReadableFXStore,
+    stockSplitStore: StockSplitStore,
     cache: Cache,
 ) => Promise<Performance>;
 
@@ -45,6 +46,7 @@ export async function getPerformanceSeries(
     searchStore: SearchStore,
     priceStore: HistoricalReadableStore,
     fxStore: HistoricalReadableFXStore,
+    stockSplitStore: StockSplitStore,
     cache: Cache,
 ): Promise<PerformanceSeries> {
     const performanceSeries: PerformanceSeries = [];
@@ -61,6 +63,7 @@ export async function getPerformanceSeries(
             searchStore,
             priceStore,
             fxStore,
+            stockSplitStore,
             cache,
         );
         performanceSeries.push({

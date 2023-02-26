@@ -7,12 +7,16 @@
 //   all that data in one go and populate the cache, so the iterative requests will be cached.
 // - The fact that the cache is populated means that the data is readily available.
 
-import { Exchange } from "../src/exchange";
-import { HistoricalReadableFXStore, HistoricalReadableStore, Interval, SearchStore } from "../src/store";
-import { Cache } from "../src/cache";
-import { Currency } from "../src/money";
-import { getISINMainExchangeTicker, getISINPriceCacheKey } from "../src/performance-cache";
-import { Positions } from "../src/portfolio";
+import { createClient } from "npm:redis@4.6.4";
+import * as superjson from "npm:superjson@1.12.2"
+
+import { HistoricalReadableFXStore, HistoricalReadableStore, Interval, SearchStore } from "../src/store.ts";
+import { Cache, RedisCache } from "../src/cache.ts";
+import { Currency, OHLC } from "../src/money.ts";
+import { getISINMainExchangeTicker, getISINPriceCacheKey } from "../src/performance-cache.ts";
+import { getPositions, Positions, Transaction } from "../src/portfolio.ts";
+import { OpnfnStore } from "../src/OpnfnStore.ts";
+import { exchangeToOperatingMic } from "../src/exchange.ts";
 
 async function populateISINPriceCache(
     isin: string,
@@ -24,7 +28,9 @@ async function populateISINPriceCache(
     fxStore: HistoricalReadableFXStore,
     cache: Cache,
 ) {
-const [exchange, ticker] = await getISINMainExchangeTicker(isin, searchStore, cache);
+    console.log(`\nPopulating cache for ${isin} between ${fromTime} and ${toTime}`)
+    const [exchange, ticker] = await getISINMainExchangeTicker(isin, searchStore, cache);
+    console.log(`${exchangeToOperatingMic(exchange)} ${ticker}`);
     const historical = await priceStore.getHistoricalByTicker(
         exchange,
         ticker,
@@ -34,46 +40,78 @@ const [exchange, ticker] = await getISINMainExchangeTicker(isin, searchStore, ca
         false,
     );
 
-
     if(historical.currency !== currency) {
         const fxHistorical = await fxStore.getHistoricalExchangeRate(
             historical.currency,
             currency,
-            fromTime,
-            toTime,
+            new Date(fromTime.getTime() - 24 * 60 * 60 * 1000 * 10),
+            new Date(toTime.getTime() +  - 24 * 60 * 60 * 1000 * 2),
             Interval.Day,
         );
 
+        // Convert fxHistorical.map to map with date strings as keys
+        const fxHistoricalConvertedMap = new Map<string, OHLC>();
+        for(const [date, ohlc] of fxHistorical) {
+            fxHistoricalConvertedMap.set(date.toISOString(), ohlc);
+        }
+
         for(const [date, ohlc] of historical.map) {
-            let fx = fxHistorical.get(date);
+            const fxDate = new Date(date);
+            let fx = fxHistoricalConvertedMap.get(fxDate.toISOString());
             while(fx === undefined) {
-                date.setDate(date.getDate() - 1);
-                fx = fxHistorical.get(date);
+                // Reduce fxDate by 1 day
+                fxDate.setTime(fxDate.getTime() - 24 * 60 * 60 * 1000);
+                fx = fxHistoricalConvertedMap.get(fxDate.toISOString());
             }
-            await cache.put(getISINPriceCacheKey(isin, currency, date), fx.close * ohlc.close);
+            const cacheKey = getISINPriceCacheKey(isin, currency, date);
+            const cacheValue = Math.floor(fx.close * ohlc.close);
+            if(Number.isInteger(cacheValue) && cacheValue >= 0) {
+                await cache.put(cacheKey, cacheValue);
+                console.log(`${cacheKey} = ${cacheValue}`);
+            } else {
+                throw new Error(`Cache value ${cacheValue}`);
+            }
         }
     } else {
         for(const [date, ohlc] of historical.map) {
-            await cache.put(getISINPriceCacheKey(isin, currency, date), ohlc.close);
+            const cacheKey = getISINPriceCacheKey(isin, currency, date);
+            const cacheValue = ohlc.close;
+            if(Number.isInteger(cacheValue) && cacheValue >= 0) {
+                await cache.put(cacheKey, cacheValue);
+                console.log(`${cacheKey} = ${cacheValue}`);
+            } else {
+                throw new Error(`Cache value ${cacheValue}`);
+            }
         }
     }
 }
 
-async function populateCacheForPositions(
-    positions: Positions,
+export async function populatePerformanceCache(
+    transactions: Transaction[],
     currency: Currency,
     searchStore: SearchStore,
     priceStore: HistoricalReadableStore,
     fxStore: HistoricalReadableFXStore,
     cache: Cache,
 ) {
+    const transactionsEarliestTime = transactions.reduce((earliest, transaction) => {
+        return transaction.time < earliest ? transaction.time : earliest;
+    }, new Date());
+    const transactionsLatestTime = transactions.reduce((latest, transaction) => {
+        return transaction.time > latest ? transaction.time : latest;
+    }, new Date());
+    const positions = getPositions(transactionsEarliestTime, transactionsLatestTime, transactions);
+
     for(const position of positions.securityPositions) {
         const earliestTime = position.transactions.reduce((earliest, transaction) => {
             return transaction.time < earliest ? transaction.time : earliest;
         }, new Date());
+        console.log(`Start time (earliest time): ${earliestTime}`);
         const latestTime = position.transactions.reduce((latest, transaction) => {
             return transaction.time > latest ? transaction.time : latest;
         }, new Date());
+        console.log(`End time (latest time): ${latestTime}`);
+
         await populateISINPriceCache(
             position.security.isin,
             earliestTime,
@@ -86,4 +124,3 @@ async function populateCacheForPositions(
         );
     }
 }
-
