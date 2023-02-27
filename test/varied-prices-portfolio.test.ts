@@ -85,7 +85,7 @@ Deno.test("transaction history with varied prices", async (t) => {
     const overrideCacheMap: Map<string, unknown> = new Map();
     overrideCacheMap.set("exchangeTicker/APPLE", [Exchange.OTC, "APPLE"]);
     overrideCacheMap.set(getPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-06")), 10_00);
-    overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02"),  new Date("2020-01-06")), []);
+    overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02")), []);
     const overrideCache = new OverrideCache(overrideCacheMap, emptyCache);
 
     await t.step("WAC performance checks", async () => {

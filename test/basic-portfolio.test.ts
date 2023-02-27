@@ -50,8 +50,8 @@ Deno.test("basic portfolio test", async (t) => {
     const overrideCacheMap: Map<string, unknown> = new Map();
     overrideCacheMap.set("exchangeTicker/APPLE", [Exchange.OTC, "APPLE"]);
     overrideCacheMap.set(getISINPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-03")), 20_00);
-    overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02"), new Date("2020-01-03")), []);
-    overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02"), new Date("2020-01-04")), []);
+    overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02")), []);
+    overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02")), []);
     const overridesCache = new OverrideCache(overrideCacheMap, emptyCache);
 
     await t.step("initial key performance metrics", async () => {
