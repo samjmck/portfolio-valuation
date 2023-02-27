@@ -105,22 +105,8 @@ export async function populateISINStockSplitsCache(
 ) {
     const now = new Date();
     const stockSplits = await stockSplitStore.getStockSplits(earliestTime, now, exchange, ticker);
-    const time = new Date(earliestTime);
-    while(time <= now) {
-        const cacheKey = getISINStockSplitsCacheKey(isin, earliestTime, time);
-        const splits = [];
-        for(const stockSplit of stockSplits) {
-            if(stockSplit.time <= time) {
-                splits.push(stockSplit);
-            }
-        }
-
-        await cache.put(cacheKey, splits);
-        console.log(`${cacheKey} = ${JSON.stringify(splits)}`);
-
-        // Add 1 day
-        time.setTime(time.getTime() + 24 * 60 * 60 * 1000);
-    }
+    const cacheKey = getISINStockSplitsCacheKey(isin, earliestTime);
+    await cache.put(cacheKey, stockSplits, 24 * 60 * 60);
 }
 
 export async function populatePerformanceCache(
