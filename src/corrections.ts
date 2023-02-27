@@ -11,8 +11,9 @@ export async function getStockSplitCorrectedTransactions(
     cache: Cache,
 ): Promise<Transaction[]> {
     const transactionsByIsin = new Map<string, SecurityTransaction[]>();
+    const duplicatedTransactions = structuredClone(transactions);
 
-    for (const transaction of transactions) {
+    for (const transaction of duplicatedTransactions) {
         if (!isSecurityTransaction(transaction)) {
             continue;
         }
@@ -43,5 +44,5 @@ export async function getStockSplitCorrectedTransactions(
         }
     }
 
-    return transactions;
+    return duplicatedTransactions;
 }

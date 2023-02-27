@@ -10,27 +10,36 @@
 import { createClient } from "npm:redis@4.6.4";
 import * as superjson from "npm:superjson@1.12.2"
 
-import { HistoricalReadableFXStore, HistoricalReadableStore, Interval, SearchStore } from "../src/store.ts";
+import {
+    HistoricalReadableFXStore,
+    HistoricalReadableStore,
+    Interval,
+    SearchStore,
+    StockSplitStore
+} from "../src/store.ts";
 import { Cache, RedisCache } from "../src/cache.ts";
 import { Currency, OHLC } from "../src/money.ts";
-import { getISINMainExchangeTicker, getISINPriceCacheKey } from "../src/performance-cache.ts";
+import {
+    getISINMainExchangeTicker,
+    getISINPriceCacheKey,
+    getISINStockSplitsCacheKey
+} from "../src/performance-cache.ts";
 import { getPositions, Positions, Transaction } from "../src/portfolio.ts";
 import { OpnfnStore } from "../src/OpnfnStore.ts";
-import { exchangeToOperatingMic } from "../src/exchange.ts";
+import { Exchange, exchangeToOperatingMic } from "../src/exchange.ts";
 
 async function populateISINPriceCache(
     isin: string,
+    exchange: Exchange,
+    ticker: string,
     fromTime: Date,
     toTime: Date,
     currency: Currency,
-    searchStore: SearchStore,
     priceStore: HistoricalReadableStore,
     fxStore: HistoricalReadableFXStore,
     cache: Cache,
 ) {
-    console.log(`\nPopulating cache for ${isin} between ${fromTime} and ${toTime}`)
-    const [exchange, ticker] = await getISINMainExchangeTicker(isin, searchStore, cache);
-    console.log(`${exchangeToOperatingMic(exchange)} ${ticker}`);
+    console.log(`\nPopulating price cache for ${isin} between ${fromTime} and ${toTime}`)
     const historical = await priceStore.getHistoricalByTicker(
         exchange,
         ticker,
@@ -86,12 +95,41 @@ async function populateISINPriceCache(
     }
 }
 
+export async function populateISINStockSplitsCache(
+    isin: string,
+    exchange: Exchange,
+    ticker: string,
+    earliestTime: Date,
+    stockSplitStore: StockSplitStore,
+    cache: Cache,
+) {
+    const now = new Date();
+    const stockSplits = await stockSplitStore.getStockSplits(earliestTime, now, exchange, ticker);
+    const time = new Date(earliestTime);
+    while(time <= now) {
+        const cacheKey = getISINStockSplitsCacheKey(isin, earliestTime, time);
+        const splits = [];
+        for(const stockSplit of stockSplits) {
+            if(stockSplit.time <= time) {
+                splits.push(stockSplit);
+            }
+        }
+
+        await cache.put(cacheKey, splits);
+        console.log(`${cacheKey} = ${JSON.stringify(splits)}`);
+
+        // Add 1 day
+        time.setTime(time.getTime() + 24 * 60 * 60 * 1000);
+    }
+}
+
 export async function populatePerformanceCache(
     transactions: Transaction[],
     currency: Currency,
     searchStore: SearchStore,
     priceStore: HistoricalReadableStore,
     fxStore: HistoricalReadableFXStore,
+    stockSplitStore: StockSplitStore,
     cache: Cache,
 ) {
     const transactionsEarliestTime = transactions.reduce((earliest, transaction) => {
@@ -112,15 +150,27 @@ export async function populatePerformanceCache(
         }, new Date());
         console.log(`End time (latest time): ${latestTime}`);
 
+        const [exchange, ticker] = await getISINMainExchangeTicker(position.security.isin, searchStore, cache);
+        console.log(`${exchange} ${ticker}}`);
+
         await populateISINPriceCache(
             position.security.isin,
+            exchange,
+            ticker,
             earliestTime,
             latestTime,
             currency,
-            searchStore,
             priceStore,
             fxStore,
-            cache
+            cache,
+        );
+        await populateISINStockSplitsCache(
+            position.security.isin,
+            exchange,
+            ticker,
+            earliestTime,
+            stockSplitStore,
+            cache,
         );
     }
 }
