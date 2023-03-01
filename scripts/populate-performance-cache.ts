@@ -21,8 +21,7 @@ import { Cache, RedisCache } from "../src/cache.ts";
 import { Currency, OHLC } from "../src/money.ts";
 import {
     getISINMainExchangeTicker,
-    getISINPriceCacheKey,
-    getISINStockSplitsCacheKey
+    getISINStockSplitsCacheKey, getSecurityPriceCacheKey,
 } from "../src/performance-cache.ts";
 import { getPositions, Positions, Transaction } from "../src/portfolio.ts";
 import { OpnfnStore } from "../src/OpnfnStore.ts";
@@ -72,7 +71,7 @@ async function populateISINPriceCache(
                 fxDate.setTime(fxDate.getTime() - 24 * 60 * 60 * 1000);
                 fx = fxHistoricalConvertedMap.get(fxDate.toISOString());
             }
-            const cacheKey = getISINPriceCacheKey(isin, currency, date);
+            const cacheKey = getSecurityPriceCacheKey(exchange, ticker, currency, date);
             const cacheValue = Math.floor(fx.close * ohlc.close);
             if(Number.isInteger(cacheValue) && cacheValue >= 0) {
                 await cache.put(cacheKey, cacheValue);
@@ -83,7 +82,7 @@ async function populateISINPriceCache(
         }
     } else {
         for(const [date, ohlc] of historical.map) {
-            const cacheKey = getISINPriceCacheKey(isin, currency, date);
+            const cacheKey = getSecurityPriceCacheKey(exchange, ticker, currency, date);
             const cacheValue = ohlc.close;
             if(Number.isInteger(cacheValue) && cacheValue >= 0) {
                 await cache.put(cacheKey, cacheValue);

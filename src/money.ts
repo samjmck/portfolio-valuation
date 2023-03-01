@@ -37,6 +37,8 @@ export function stringToCurrency(value: string): Currency {
             return Currency.EUR;
         case "CAD":
             return Currency.CAD;
+        case "CHF":
+            return Currency.CHF;
         case "JPY":
             return Currency.JPY;
         case "AUD":
