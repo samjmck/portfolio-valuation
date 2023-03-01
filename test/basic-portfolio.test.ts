@@ -15,7 +15,10 @@ import { getFIFOPerformance } from "../src/performance-fifo.ts";
 import { getWACPerformance } from "../src/performance-wac.ts";
 import { GetPerformanceFunction } from "../src/performance.ts";
 import { getLIFOPerformance } from "../src/performance-lifo.ts";
-import { getISINPriceCacheKey, getISINStockSplitsCacheKey } from "../src/performance-cache.ts";
+import {
+    getISINStockSplitsCacheKey,
+    getSecurityPriceCacheKey
+} from "../src/performance-cache.ts";
 
 
 Deno.test("basic portfolio test", async (t) => {
@@ -49,7 +52,7 @@ Deno.test("basic portfolio test", async (t) => {
     // Set share prices on days of transactions
     const overrideCacheMap: Map<string, unknown> = new Map();
     overrideCacheMap.set("exchangeTicker/APPLE", [Exchange.OTC, "APPLE"]);
-    overrideCacheMap.set(getISINPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-03")), 20_00);
+    overrideCacheMap.set(getSecurityPriceCacheKey(Exchange.OTC, "APPLE", Currency.USD, new Date("2020-01-03")), 20_00);
     overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02")), []);
     overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02")), []);
     const overridesCache = new OverrideCache(overrideCacheMap, emptyCache);
@@ -95,7 +98,7 @@ Deno.test("basic portfolio test", async (t) => {
             },
             metadata: {},
         });
-        overrideCacheMap.set(getISINPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-04")), 20_00);
+        overrideCacheMap.set(getSecurityPriceCacheKey(Exchange.OTC, "APPLE", Currency.USD, new Date("2020-01-04")), 20_00);
 
         const performance = await getFIFOPerformance(
             transactionsBasicPortfolio,

@@ -14,11 +14,7 @@ import { OpnfnStore } from "../src/OpnfnStore.ts";
 import { getFIFOPerformance } from "../src/performance-fifo.ts";
 import { getLIFOPerformance } from "../src/performance-lifo.ts";
 import { getWACPerformance } from "../src/performance-wac.ts";
-import { getISINStockSplitsCacheKey } from "../src/performance-cache.ts";
-
-function getPriceCacheKey(isin: string, currency: Currency, time: Date) {
-    return `price/${isin}/${currency}/${time.toISOString().replace(/T.*/, "")}`;
-}
+import { getISINStockSplitsCacheKey, getSecurityPriceCacheKey } from "../src/performance-cache.ts";
 
 Deno.test("transaction history with varied prices", async (t) => {
     const emptyCache = new EmptyCache();
@@ -84,7 +80,7 @@ Deno.test("transaction history with varied prices", async (t) => {
     // Set share prices on days of transactions
     const overrideCacheMap: Map<string, unknown> = new Map();
     overrideCacheMap.set("exchangeTicker/APPLE", [Exchange.OTC, "APPLE"]);
-    overrideCacheMap.set(getPriceCacheKey("APPLE", Currency.USD, new Date("2020-01-06")), 10_00);
+    overrideCacheMap.set(getSecurityPriceCacheKey(Exchange.OTC, "APPLE", Currency.USD, new Date("2020-01-06")), 10_00);
     overrideCacheMap.set(getISINStockSplitsCacheKey("APPLE", new Date("2020-01-02")), []);
     const overrideCache = new OverrideCache(overrideCacheMap, emptyCache);
 
