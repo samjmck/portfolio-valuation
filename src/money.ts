@@ -7,6 +7,21 @@ export enum Currency {
     CHF = "CHF",
     JPY = "JPY",
     AUD = "AUD",
+    DKK = "DKK",
+    HKD = "HKD",
+    CNY = "CNY",
+    MXN = "MXN",
+    INR = "INR",
+    BRL = "BRL",
+    KRW = "KRW",
+    SEK = "SEK",
+    PLN = "PLN",
+    NOK = "NOK",
+    ZAR = "ZAR",
+    SGD = "SGD",
+    ILS = "ILS",
+    CZK = "CZK",
+    HUF = "HUF",
 }
 
 export function stringToCurrency(value: string): Currency {
@@ -26,8 +41,38 @@ export function stringToCurrency(value: string): Currency {
             return Currency.JPY;
         case "AUD":
             return Currency.AUD;
+        case "DKK":
+            return Currency.DKK;
+        case "HKD":
+            return Currency.HKD;
+        case "CNY":
+            return Currency.CNY;
+        case "MXN":
+            return Currency.MXN;
+        case "INR":
+            return Currency.INR;
+        case "BRL":
+            return Currency.BRL;
+        case "KRW":
+            return Currency.KRW;
+        case "SEK":
+            return Currency.SEK;
+        case "PLN":
+            return Currency.PLN;
+        case "NOK":
+            return Currency.NOK;
+        case "ZAR":
+            return Currency.ZAR;
+        case "SGD":
+            return Currency.SGD;
+        case "ILS":
+            return Currency.ILS;
+        case "CZK":
+            return Currency.CZK;
+        case "HUF":
+            return Currency.HUF;
         default:
-            return Currency.USD;
+            throw new Error(`Could not find currency "${value}"`);
     }
 }
 

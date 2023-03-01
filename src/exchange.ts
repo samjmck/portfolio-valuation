@@ -113,6 +113,8 @@ export function exchangeToOperatingMic(exchange: Exchange): string {
             return "XTKS";
         case Exchange.LondonStockExchangeIOB:
             return "XLON";
+        case Exchange.NasdaqCopenhagen:
+            return "XCSE";
         default:
             throw new Error(`could not get MIC of "${exchange}"`);
     }
